@@ -12,12 +12,29 @@
   [v-cloak] {
     display: none;
   }
+  .ml-auto .dropdown-menu {
+    left: auto !important;
+    right: 0;
+  }
   </style>
 </head>
 <body>
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+  <ul class="navbar-nav ml-auto">
+    <li class="nav-item dropdown">
+      {% if user.is_authenticated %}
+      <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">{{ user.get_username }}</a>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="{% url 'rest_framework:logout' %}">Logout</a>
+      </div>
+      {% else %}
+      <a class="nav-link" href="{% url 'rest_framework:login' %}">Login</a>
+      {% endif %}
+    </li>
+  </ul>
+</nav>
 <main class="container">
   <div id="app" v-cloak>
-    <button v-on:click="login">ログイン</button>
     <br>
     <br>
     <div class="row form-group">
@@ -43,7 +60,7 @@
       </div>
     </div>
 
-    <pre style="margin-top: 50px;">${ $data }</pre>
+    <pre style="margin-top: 50px;">#{ $data }</pre>
   </div>
 </main>
 
@@ -55,25 +72,16 @@
 <script src="https://cdn.jsdelivr.net/npm/vue@2.6.6/dist/vue.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"></script>
 <script>
+axios.defaults.xsrfCookieName = 'csrftoken';
+axios.defaults.xsrfHeaderName = 'X-CSRFToken';
+// axios.defaults.withCredentials = true;
+
 const api = axios.create({
   baseURL: `http://127.0.0.1:8000/api/v1/`
 });
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('jwt');
-  if (token) {
-    config.headers.Authorization = `JWT ${token}`;
-    return config;
-  }
-  return config;
-}, function (error) {
-  return Promise.reject(error)
-});
-// axios.defaults.xsrfCookieName = 'csrftoken'
-// axios.defaults.xsrfHeaderName = 'X-CSRFToken'
-// axios.defaults.withCredentials = true
 
 // 構文のバッティングを回避
-Vue.options.delimiters = ['${', '}'];
+Vue.options.delimiters = ['#{', '}'];
 
 const app = new Vue({
   el: '#app',
@@ -86,21 +94,6 @@ const app = new Vue({
     errors: []
   },
   methods: {
-    login: function () {
-      api.post('/auth/jwt/create/', {
-        'username': 'admin',
-        'password': 'pass12345'
-      })
-      .then(response => {
-        console.log('Success!!');
-        localStorage.setItem('jwt', response.data.access);
-        this.response = response;
-      })
-      .catch(error => {
-        console.log('Fail!!');
-        this.response = error.response;
-      })
-    },
     postData: function () {
       api.post('/books/', {
         'id': this.book.id,
