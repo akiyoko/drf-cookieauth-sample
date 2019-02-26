@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     # 3rd party
     'rest_framework',          # 追加
+    'django_extensions',
 
     # Local
     'apiv1.apps.Apiv1Config',  # 追加
